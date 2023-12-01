@@ -14,6 +14,19 @@ def create_profile(sender, instance, created, **kwargs):
             email=user.email,
             name=user.first_name
         )
+        
+post_save.connect(create_profile, sender=User)
+
+def update_user(sender, instance, created, **kwarg):
+    profile = instance
+    user = profile.user
+    if created == False:
+        user.first_name = profile.name
+        user.username = profile.username
+        user.email = profile.email
+        user.save()
+
+post_save.connect(update_user, sender=Profile)
 
 # @receiver(post_delete, sender=Profile)
 def delete_user(sender, instance, **kwargs):
@@ -23,5 +36,4 @@ def delete_user(sender, instance, **kwargs):
     except User.DoesNotExist:
         print('user is already deleted by CASCADE')
 
-post_save.connect(create_profile, sender=User)
 post_delete.connect(delete_user, sender=Profile)
