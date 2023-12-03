@@ -3,7 +3,7 @@ from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
 from django.contrib.auth.models import User
 from .models import Profile
-from .forms import CustomUserCreationForm, ProfileForm
+from .forms import CustomUserCreationForm, ProfileForm, SkillForm
 from django.contrib.auth.decorators import login_required
 
 
@@ -14,14 +14,11 @@ def login_user(request):
     if request.method == "POST":
         username = request.POST["username"]
         password = request.POST["password"]
-
         try:
             user = User.objects.get(username=username)
         except:
             messages.error(request, "Username does not exist")
-
         user = authenticate(request, username=username, password=password)
-
         if user is not None:
             login(request, user)
             return redirect("profiles")
@@ -48,7 +45,6 @@ def register_user(request):
             return redirect("edit-account")
         else:
             messages.error(request, "An error occurred during registration!")
-
     page = "register"
     form = CustomUserCreationForm()
     context = {"page": page, "form": form}
@@ -65,7 +61,6 @@ def user_profile(requests, pk):
     profile = Profile.objects.get(id=pk)
     top_skills = profile.skill_set.exclude(description__exact="")
     other_skills = profile.skill_set.filter(description="")
-
     context = {
         "profile": profile,
         "top_skills": top_skills,
@@ -95,8 +90,48 @@ def edit_account(request):
         form = ProfileForm(request.POST, request.FILES, instance=profile)
         if form.is_valid():
             form.save()
-
-            return redirect('account')
-
+            return redirect("account")
     context = {"form": form}
     return render(request, "users/profile_form.html", context)
+
+
+@login_required(login_url="login")
+def create_skill(request):
+    profile = request.user.profile
+    form = SkillForm()
+    if request.method == "POST":
+        form = SkillForm(request.POST)
+        if form.is_valid():
+            skill = form.save(commit=False)
+            skill.owner = profile
+            skill.save()
+            messages.success(request, "Skill is added successfully")
+            return redirect("account")
+    context = {"form": form}
+    return render(request, "users/skill_form.html", context)
+
+
+@login_required(login_url="login")
+def update_skill(request, pk):
+    profile = request.user.profile
+    skill = profile.skill_set.get(id=pk)
+    form = SkillForm(instance=skill)
+    if request.method == "POST":
+        form = SkillForm(request.POST, instance=skill)
+        if form.is_valid():
+            skill.save()
+            messages.success(request, "Skill is updated successfully")
+            return redirect("account")
+    context = {"form": form}
+    return render(request, "users/skill_form.html", context)
+
+
+def delete_skill(request, pk):
+    profile = request.user.profile
+    skill = profile.skill_set.get(id=pk)
+    if request.method == 'POST':
+        skill.delete()
+        messages.success(request, "Skill is deleted successfully")
+        return redirect('account')
+    context = {"object": skill}
+    return render(request, "delete_template.html", context)
