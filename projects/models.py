@@ -11,7 +11,7 @@ class Project(models.Model):
     featured_image = models.ImageField(default="default.jpg")
     demo_link = models.CharField(max_length=2000, null=True, blank=True)
     source_link = models.CharField(max_length=2000, null=True, blank=True)
-    tags = models.ManyToManyField("Tag", null=True, blank=True)
+    tags = models.ManyToManyField("Tag")
     vote_total = models.IntegerField(default=0, null=True, blank=True)
     vote_ratio = models.IntegerField(default=0, null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True)
@@ -25,28 +25,29 @@ class Project(models.Model):
     class Meta:
         ordering = ["-vote_ratio", "-vote_total", "title"]
         # ordering = ['-created']
-        
+
     @property
     def reviewers(self):
-        queryset = self.review_set.all().values_list('owner__id', flat=True)
+        queryset = self.review_set.all().values_list("owner__id", flat=True)
         return queryset
 
     @property
     def get_vote_count(self):
         reviews = self.review_set.all()
-        up_votes = reviews.filter(value='up').count()
+        up_votes = reviews.filter(value="up").count()
         total_votes = reviews.count()
-        ratio = (up_votes/total_votes) * 100
+        ratio = (up_votes / total_votes) * 100
         self.vote_total = total_votes
         self.vote_ratio = ratio
         self.save()
+
 
 class Review(models.Model):
     VOTE_TYPE = (
         ("up", "Up Vote"),
         ("down", "Down Vote"),
     )
-    owner = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    owner = models.ForeignKey(Profile, on_delete=models.CASCADE, null=True)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     body = models.TextField(null=True, blank=True)
     value = models.CharField(max_length=200, choices=VOTE_TYPE)
@@ -57,9 +58,9 @@ class Review(models.Model):
 
     def __str__(self):
         return self.value
-    
+
     class Meta:
-        unique_together = [['owner', 'project']]
+        unique_together = [["owner", "project"]]
 
 
 class Tag(models.Model):
