@@ -26,7 +26,7 @@
       <div class="column column--2of3">
         <img
           class="singleProject__preview"
-          src="{{ project.featured_image.url }}"
+          src="{{ project.image_url }}"
           alt="portfolio thumbnail"
         />
         <a href="{% url 'user-profile' project.owner.id %}" class="singleProject__developer">{{ project.owner.name }}</a>
@@ -69,7 +69,7 @@
               <a href="">
                 <img
                 class="avatar avatar--md"
-                src="{{ review.owner.profile_image.url }}"
+                src="{{ review.owner.image_url }}"
                 alt="user"
                 />
               </a>
